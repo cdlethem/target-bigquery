@@ -4,22 +4,19 @@ from setuptools import setup
 
 setup(
     name="target-bigquery",
-    version="1.5.0",
+    version="0.10.2",
     description="Singer.io target for writing data to Google BigQuery",
-    author="RealSelf Business Intelligence",
-    url="https://github.com/dreamdata-io/target-bigquery",
+    author="Adswerve",
+    url="https://github.com/adswerve/target-bigquery",
     classifiers=["Programming Language :: Python :: 3 :: Only"],
     packages=["target_bigquery"],
     install_requires=[
-        "jsonschema==2.6.0",
-        "singer-python>=1.5.0",
-        "google-api-python-client>=1.6.2",
-        "google-cloud>=0.34.0",
-        "google-cloud-bigquery>=1.9.0",
-        "oauth2client",
+        "singer-python==5.9.0",
+        "google-cloud==0.34.0",
+        "google-cloud-bigquery==1.25.0",
     ],
     entry_points="""
         [console_scripts]
         target-bigquery=target_bigquery:main
-      """,
+      """
 )

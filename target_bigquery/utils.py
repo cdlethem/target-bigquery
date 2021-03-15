@@ -1,8 +1,11 @@
-import logging
 import json
+import os
 import sys
 
 import singer
+from google.api_core import exceptions
+from google.cloud import bigquery
+from google.cloud.bigquery import Dataset
 
 logger = singer.get_logger()
 
@@ -14,21 +17,24 @@ def emit_state(state):
         sys.stdout.write("{}\n".format(line))
         sys.stdout.flush()
 
+        if os.environ.get("TARGET_BIGQUERY_STATE_FILE", None):
+            fn = os.environ.get("TARGET_BIGQUERY_STATE_FILE", None)
+            with open(fn, "a") as f:
+                f.write("{}\n".format(line))
 
-def collect():
+
+def ensure_dataset(project_id, dataset_id, location):
+    from google.cloud.bigquery import DatasetReference
+    client = bigquery.Client(project=project_id, location=location)
+
+    dataset_ref = DatasetReference(project_id, dataset_id)
     try:
-        version = pkg_resources.get_distribution("target-bigquery").version
-        conn = http.client.HTTPConnection("collector.singer.io", timeout=10)
-        conn.connect()
-        params = {
-            "e": "se",
-            "aid": "singer",
-            "se_ca": "target-bigquery",
-            "se_ac": "open",
-            "se_la": version,
-        }
-        conn.request("GET", "/i?" + urllib.parse.urlencode(params))
-        conn.getresponse()
-        conn.close()
-    except:
-        logger.debug("Collection request failed")
+        client.create_dataset(dataset_ref)
+    except exceptions.GoogleAPICallError as e:
+        if e.response.status_code == 409:  # dataset exists
+            pass
+        else:
+            logger.critical(f"unable to create dataset {dataset_id} in project {project_id}; Exception {e}")
+            return 2  # sys.exit(2)
+
+    return client, Dataset(dataset_ref)
